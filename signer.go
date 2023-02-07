@@ -12,13 +12,13 @@ type Signer interface {
 }
 
 type Chunk struct {
-	offset        uint64
-	length        uint64
-	hashSignature string
+	Offset        uint64
+	Length        uint64
+	HashSignature string
 }
 
 func (ch Chunk) Bytes() []byte {
-	str := fmt.Sprintf("%d-%d-%s\n", ch.offset, ch.length, ch.hashSignature)
+	str := fmt.Sprintf("%d-%d-%s\n", ch.Offset, ch.Length, ch.HashSignature)
 	return []byte(str)
 }
 
@@ -35,7 +35,7 @@ func NewFileSignature(ch <-chan Chunk, b chan<- []byte) Signer {
 }
 
 func (fs fileSignature) Sign(file, signatureFile string) error {
-	fs.getCreatedChunksAndStoreTenToFile(signatureFile)
+	fs.storeSignaturesOfTheChunksToFile(signatureFile)
 
 	f, err := os.Open(file)
 	if err != nil {
@@ -58,7 +58,7 @@ func (fs fileSignature) Sign(file, signatureFile string) error {
 
 }
 
-func (fs fileSignature) getCreatedChunksAndStoreTenToFile(file string) {
+func (fs fileSignature) storeSignaturesOfTheChunksToFile(file string) {
 	f, err := os.Create(file)
 	if err != nil {
 		log.Fatal(err)
