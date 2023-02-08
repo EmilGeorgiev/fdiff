@@ -13,8 +13,9 @@ type Signer interface {
 }
 
 type Chunk struct {
-	Offset uint64
-	Data   []byte
+	Offset    uint64
+	Data      []byte
+	Signature string
 }
 
 type fileSignature struct {
