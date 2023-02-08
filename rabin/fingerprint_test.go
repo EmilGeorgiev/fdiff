@@ -42,7 +42,7 @@ func TestCalculateRabinFingerPrintFor4Bytes(t *testing.T) {
 	//p := []byte("This is a program that calculates the difference")
 	p := []byte("abcd")
 	// Action
-	h := rabin.NewFingerprintHash(p)
+	h := rabin.NewHash(p)
 	actual := h.Value()
 
 	// Assert
@@ -55,7 +55,7 @@ func TestCalculateRabinFingerPrintFor4Bytess(t *testing.T) {
 	//p := []byte("This is a program that calculates the difference")
 	p := []byte("bcde")
 	// Action
-	h := rabin.NewFingerprintHash(p)
+	h := rabin.NewHash(p)
 	actual := h.Value()
 
 	// Assert
@@ -68,7 +68,7 @@ func TestCalculateNextRabinFingerPrintFor4Bytes(t *testing.T) {
 	//p := []byte("This is a program that calculates the difference")
 	p := []byte("abcd")
 	// Action
-	h := rabin.NewFingerprintHash(p)
+	h := rabin.NewHash(p)
 	b := []byte("e")
 	actual := h.Next(b[0])
 
@@ -82,7 +82,7 @@ func TestCalculateNextRabinFingerPrintFor4Bytes(t *testing.T) {
 //	// Set up
 //	p := "This is a program that calculates the difference"
 //	// Action
-//	h := rabin.NewFingerprintHash(p)
+//	h := rabin.NewHash(p)
 //	actual := h.Value()
 //
 //	// Assert
@@ -95,7 +95,7 @@ func TestCalculateNextRabinFingerPrintFor4Bytes(t *testing.T) {
 //	p := "абвгྠྡ ྡ"
 //
 //	// Action
-//	h := rabin.NewFingerprintHash(p)
+//	h := rabin.NewHash(p)
 //	actual := h.Value()
 //
 //	// Assert
@@ -105,7 +105,7 @@ func TestCalculateNextRabinFingerPrintFor4Bytes(t *testing.T) {
 //
 //func TestNextRollingHash(t *testing.T) {
 //	// Set up
-//	rh := rabin.NewFingerprintHash("abcd")
+//	rh := rabin.NewHash("abcd")
 //
 //	// Action
 //	actual := rh.Next('e')

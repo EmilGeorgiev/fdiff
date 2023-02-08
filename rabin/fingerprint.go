@@ -32,7 +32,7 @@ func Pow(a uint64, b int) uint64 {
 	return n
 }
 
-func NewFingerprintHash(bytes []byte) FingerprintHash {
+func NewHash(bytes []byte) FingerprintHash {
 	var rfh rabinFingerprintHash
 	var h uint64
 	degreeOfPolynomial := len(bytes) * numberOfBitsPerByte

@@ -1,0 +1,13 @@
+A rolling hash (also known as recursive hashing or rolling checksum) is a hash function where the input is hashed in a
+window that moves through the input.
+
+A few hash functions allow a rolling hash to be computed very quickly—the new hash value is rapidly calculated given
+only the old hash value, the old value removed from the window, and the new value added to the window—similar to the
+way a moving average function can be computed much more quickly than other low-pass filters.
+
+One of the main applications is the Rabin–Karp string search algorithm, which uses the rolling hash described below.
+Another popular application is the rsync program, which uses a checksum based on Mark Adler's adler-32 as its rolling
+hash. Low Bandwidth Network Filesystem (LBFS) uses a Rabin fingerprint as its rolling hash. FastCDC (Fast Content-Defined Chunking)
+uses a compute-efficient Gear fingerprint as its rolling hash.
+
+At best, rolling hash values are pairwise independent or strongly universal. They cannot be 3-wise independent, for example.
