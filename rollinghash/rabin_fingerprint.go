@@ -54,6 +54,9 @@ func (rfh *rabinFingerprintHash) Next(b byte) uint64 {
 		}
 		polynomialOverGF2 += term
 	}
+	for i, p := range rfh.polynomialsOverGF2Values[1:] {
+		rfh.polynomialsOverGF2Values[i+1] = p * pow(multiplier, 8)
+	}
 	rfh.value = (((rfh.value+defaultModulus-rfh.polynomialsOverGF2Values[0]%defaultModulus)*pow(multiplier, 8))%defaultModulus + polynomialOverGF2) % defaultModulus
 	rfh.polynomialsOverGF2Values = append(rfh.polynomialsOverGF2Values[1:], polynomialOverGF2)
 	return rfh.value
@@ -65,7 +68,7 @@ func pow(a uint64, b int) uint64 {
 	}
 	n := uint64(1)
 	for i := 0; i < b; i++ {
-		// we use module because we don't want to work with big integers. Also, it is much faster.
+		// we use module because we don't want t\o work with big integers. Also, it is much faster.
 		n = (n * a) % defaultModulus
 	}
 	return n
