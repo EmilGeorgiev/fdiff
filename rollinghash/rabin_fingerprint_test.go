@@ -1,186 +1,158 @@
 package rollinghash_test
 
 import (
-	"fmt"
-	"github.com/EmilGeorgiev/fdiff/rollinghash"
 	"testing"
 
+	"github.com/EmilGeorgiev/fdiff/rollinghash"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestPow(t *testing.T) {
-	fmt.Println(rollinghash.Pow(10, 97))
-}
+var (
+	// a = 97 = 01100001 = (127^6 + 127^5 +127^0) % 8191 = 3002
+	fingerprintOfA = (pow(127, 6) + pow(127, 5) + 1) % 8191
 
-func TestOoff(t *testing.T) {
-	data := []byte("LLorem ipsum dolor sit amet,Lore consectetur Lore adipiscingLore Loreelit, sedLore do eiusmodLore ")
+	// b = 98 =  01100010 = (127^6 + 127^5 +127^1) % 8191 = 3128
+	fingerprintOfB = (pow(127, 6) + pow(127, 5) + 127) % 8191
 
-	h := rollinghash.NewRabinFingerprint(data[:4])
+	// c = 99 =  01100011 = (127^6 + 127^5 +127^1 + 127^0) % 8191 = 3129
+	fingerprintOfC = (pow(127, 6) + pow(127, 5) + 127 + 1) % 8191
 
-	// 7336
-	for i := 4; i < len(data); i++ {
-		if h.Next(data[i]) == 7336 {
-			fmt.Println("Index is breakpoint: ", i)
-		}
+	// d = 100 = 01100100 = (127^6 + 127^5 +127^2) % 8191 = 2748
+	fingerprintOfD = (pow(127, 6) + pow(127, 5) + (127 * 127 % 8191)) % 8191
+
+	// d = 101 = 01100101 = (127^6 + 127^5 + 127^2 + 1) % 8191 = 2749
+	fingerprintOfE = (pow(127, 6) + pow(127, 5) + (127 * 127 % 8191) + 1) % 8191
+
+	// f = 102 = 01100110 = (127^6 + 127^5 + 127^2 + 127 ) % 8191 = 2875
+	fingerprintOfF = (pow(127, 6) + pow(127, 5) + (127 * 127 % 8191) + 127) % 8191
+
+	// g = 103 = 01100111 = (127^6 + 127^5 + 127^2 + 127 + 1) % 8191 = 2876
+	fingerprintOfG = (pow(127, 6) + pow(127, 5) + (127 * 127 % 8191) + 127 + 1) % 8191
+)
+
+func TestNewRabinFingerprint(t *testing.T) {
+	// SetUp
+
+	// a = 97 = 01100001 = (127^6 + 127^5 +127^0) % 8191 = 3002
+	polyOfA := pow(127, 6) + pow(127, 5) + 1
+	fingerprintOfA := polyOfA % 8191
+
+	// b = 98 =  01100010 = (127^6 + 127^5 +127^1) % 8191 = 3128
+	polyOfB := pow(127, 6) + pow(127, 5) + 127
+	fingerprintOfB := polyOfB % 8191
+
+	// c = 99 =  01100011 = (127^6 + 127^5 +127^1 + 127^0) % 8191 = 3129
+	polyOfC := pow(127, 6) + pow(127, 5) + 127 + 1
+	fingerprintOfC := polyOfC % 8191
+
+	// d = 100 = 01100100 = (127^6 + 127^5 +127^2) % 8191 = 2748
+	polyOfD := pow(127, 6) + pow(127, 5) + ((127 * 127) % 8191)
+	fingerprintOfD := polyOfD % 8191
+
+	cases := []struct {
+		name                string
+		text                string
+		expectedFingerPrint uint64
+	}{
+		{name: "fingerprint for a", text: "a", expectedFingerPrint: fingerprintOfA},
+		{name: "fingerprint for b", text: "b", expectedFingerPrint: fingerprintOfB},
+		{name: "fingerprint for c", text: "c", expectedFingerPrint: fingerprintOfC},
+		{name: "fingerprint for d", text: "d", expectedFingerPrint: fingerprintOfD},
+		{
+			name:                "fingerprint for ab",
+			text:                "ab",
+			expectedFingerPrint: ((fingerprintOfA * pow(127, 8)) + fingerprintOfB) % 8191,
+		},
+		{
+			name:                "fingerprint for bc",
+			text:                "bc",
+			expectedFingerPrint: ((fingerprintOfB * pow(127, 8)) + fingerprintOfC) % 8191,
+		},
+		{
+			name:                "fingerprint for cd",
+			text:                "cd",
+			expectedFingerPrint: ((fingerprintOfC * pow(127, 8)) + fingerprintOfD) % 8191,
+		},
+		{
+			name:                "fingerprint for da",
+			text:                "da",
+			expectedFingerPrint: ((fingerprintOfD * pow(127, 8)) + fingerprintOfA) % 8191,
+		},
+		{
+			name: "fingerprint for abcd",
+			text: "abcd",
+			expectedFingerPrint: ((fingerprintOfA * pow(127, 24)) +
+				(fingerprintOfB * pow(127, 16)) +
+				(fingerprintOfC * pow(127, 8)) +
+				fingerprintOfD) % 8191,
+		},
 	}
 
-	//expected1 := rollinghash.NewRabinFingerprint(data[1:49])
-	//expected2 := rollinghash.NewRabinFingerprint(data[2:50])
-	//expected3 := rollinghash.NewRabinFingerprint(data[3:51])
-	////expected4 := rollinghash.NewRabinFingerprint(data[4:44])
-	////expected5 := rollinghash.NewRabinFingerprint(data[5:45])
-	////expected6 := rollinghash.NewRabinFingerprint(data[6:46])
-	//
-	//assert.EqualValues(t, expected1.Value(), h.Next(data[48]))
-	//assert.EqualValues(t, expected2.Value(), h.Next(data[49]))
-	//assert.EqualValues(t, expected3.Value(), h.Next(data[50]))
-	////assert.EqualValues(t, expected4.Value(), h.Next(data[43]))
-	////assert.EqualValues(t, expected5.Value(), h.Next(data[44]))
-	////assert.EqualValues(t, expected6.Value(), h.Next(data[45]))
-	//
-	//fmt.Println(expected1.Value()) // 152   - 3292
-	//fmt.Println(expected2.Value()) // 5824  - 152
-	//fmt.Println(expected3.Value()) //  x    - 5824
-	//fmt.Println(expected4.Value()) //   -
-	//fmt.Println(expected5.Value()) //   -
-	//fmt.Println(expected6.Value()) // -   -
-}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			// Action
+			actual := rollinghash.NewRabinFingerprint([]byte(c.text))
 
-func TestOffSet257(t *testing.T) {
-
-	fmt.Println(6384828 % 113)
-
-	a := ((257%8191)*(257%8191)*(257%8191)*(257%8191)*(257%8191)*(257%8191))%8191 +
-		((257%8191)*(257%8191)*(257%8191)*(257%8191)*(257%8191))%8191 + 1
-	fmt.Println("Hash of 'a': ", a%8191)
-
-	b := ((257%8191)*(257%8191)*(257%8191)*(257%8191)*(257%8191)*(257%8191))%8191 +
-		((257%8191)*(257%8191)*(257%8191)*(257%8191)*(257%8191))%8191 + 257
-	fmt.Println("Hash of 'b': ", b%8191)
-
-	fmt.Println("ab: ", (a+b)%8191)
-
-	c := ((257%8191)*(257%8191)*(257%8191)*(257%8191)*(257%8191)*(257%8191))%8191 +
-		((257%8191)*(257%8191)*(257%8191)*(257%8191)*(257%8191))%8191 + 257 + 1
-	fmt.Println("Hash of 'c': ", c%8191)
-
-	d := ((257%8191)*(257%8191)*(257%8191)*(257%8191)*(257%8191)*(257%8191))%8191 +
-		((257%8191)*(257%8191)*(257%8191)*(257%8191)*(257%8191))%8191 + 257*257
-	fmt.Println("Hash of 'd': ", d%8191)
-
-	// 97 =  01100001 = (257^6 + 257^5 +257^0) % 8191 = 737
-	// 98 =  01100010 = (257^6 + 257^5 +257^1) % 8191 = 993
-	// 99 =  01100011 = (257^6 + 257^5 +257^1 + 257^0) % 8191 = 994
-	// 100 = 01100100 = (257^6 + 257^5 +257^2) % 8191 = 1257
-	// Hash of 'a':  737
-	// Hash of 'b':  993
-	// Hash of 'c':  994
-	// Hash of 'd':  1257
-
-	// Hash ab = (737 + 993) % 8191 = 1730
-
-	data := []byte("abcd")
-
-	fmt.Println("C: ", rollinghash.NewRabinFingerprint(data[:2]).Value())
-
-	h := rollinghash.NewRabinFingerprint(data[:2])
-	fmt.Println(h.Value())
-	fmt.Println(h.Next(data[2]))
-	fmt.Println(h.Next(data[3]))
-}
-
-func TestCalculateRabinFingerPrintFor4Bytes(t *testing.T) {
-	// Set up
-	//p := []byte("This is a program that calculates the difference")
-	// Vestibulum neque massa, scelerisque sit amet ligula eu, congue molestie mi. Praesent ut varius sem. Nullam at porttitor arcu, nec lacinia nisi. Ut ac dolor vitae odio interdum condimentum. Vivamus dapibus sodales ex, vitae malesuada ipsum cursus convallis. Maecenas sed egestas nulla, ac condimentum orci. Mauris diam felis, vulputate ac suscipit et, iaculis non est. Curabitur semper arcu ac ligula semper, nec luctus nisl blandit. Integer lacinia ante ac libero lobortis imperdiet. Nullam mollis convallis ipsum, ac accumsan nunc vehicula vitae. Nulla eget justo in felis tristique fringilla. Morbi sit amet tortor quis risus auctor condimentum. Morbi in ullamcorper elit. Nulla iaculis tellus sit amet mauris tempus fringilla.
-	oldB := []byte("abcd")
-	NewB := []byte("aabcd")
-	//fmt.Println(len(p))
-	// Action
-	h := rollinghash.NewRabinFingerprint(oldB[:2])
-	actual := h.Value()
-
-	old := []uint64{actual}
-	for _, b := range oldB {
-		v := h.Next(b)
-		old = append(old, v)
+			// Assert
+			assert.EqualValues(t, c.expectedFingerPrint, actual.Value())
+		})
 	}
-	fmt.Println(old)
+}
 
-	h2 := rollinghash.NewRabinFingerprint(NewB[:2])
-	newS := []uint64{h2.Value()}
-	for _, b := range NewB {
-		v := h.Next(b)
-		newS = append(newS, v)
+func TestNext(t *testing.T) {
+	// SetUp
+	h := rollinghash.NewRabinFingerprint([]byte("abcd"))
+
+	cases := []struct {
+		name                string
+		nextByte            byte
+		expectedFingerPrint uint64
+	}{
+		{
+			name:     "next character is 'e'",
+			nextByte: 101,
+			expectedFingerPrint: ((fingerprintOfB * pow(127, 24)) +
+				(fingerprintOfC * pow(127, 16)) +
+				(fingerprintOfD * pow(127, 8)) +
+				fingerprintOfE) % 8191,
+		},
+		{
+			name:     "next character is 'f'",
+			nextByte: 102,
+			expectedFingerPrint: ((fingerprintOfC * pow(127, 24)) +
+				(fingerprintOfD * pow(127, 16)) +
+				(fingerprintOfE * pow(127, 8)) +
+				fingerprintOfF) % 8191,
+		},
+		{
+			name:     "next character is 'g'",
+			nextByte: 103,
+			expectedFingerPrint: ((fingerprintOfD * pow(127, 24)) +
+				(fingerprintOfE * pow(127, 16)) +
+				(fingerprintOfF * pow(127, 8)) +
+				fingerprintOfG) % 8191,
+		},
 	}
-	fmt.Println(newS)
 
-	// Assert
-	expected := 3873
-	assert.EqualValues(t, expected, actual)
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			// Action
+			actual := h.Next(c.nextByte)
+
+			// Assert
+			assert.EqualValues(t, c.expectedFingerPrint, actual)
+		})
+	}
 }
 
-func TestCalculateRabinFingerPrintFor4Bytess(t *testing.T) {
-	// Set up
-	//p := []byte("This is a program that calculates the difference")
-	p := []byte("bcde")
-	// Action
-	h := rollinghash.NewRabinFingerprint(p)
-	actual := h.Value()
-
-	// Assert
-	expected := 7293
-	assert.EqualValues(t, expected, actual)
+func pow(a uint64, b int) uint64 {
+	if b == 0 {
+		return 1
+	}
+	n := uint64(1)
+	for i := 0; i < b; i++ {
+		// we use module because we don't want t\o work with big integers. Also, it is much faster.
+		n = (n * a) % 8191
+	}
+	return n
 }
-
-func TestCalculateNextRabinFingerPrintFor4Bytes(t *testing.T) {
-	// Set up
-	//p := []byte("This is a program that calculates the difference")
-	p := []byte("abcd")
-	// Action
-	h := rollinghash.NewRabinFingerprint(p)
-	b := []byte("e")
-	actual := h.Next(b[0])
-
-	// Assert
-	expected := 7293
-	assert.EqualValues(t, expected, actual)
-}
-
-//
-//func TestCalculateRabinFingerPrintFor48Bytes(t *testing.T) {
-//	// Set up
-//	p := "This is a program that calculates the difference"
-//	// Action
-//	h := rabin.NewHash(p)
-//	actual := h.Value()
-//
-//	// Assert
-//	expected := 1477
-//	assert.EqualValues(t, expected, actual)
-//}
-//
-//func TestCalculateRabinFingerPrintOnNonASCIICharacters(t *testing.T) {
-//	// Set up
-//	p := "абвгྠྡ ྡ"
-//
-//	// Action
-//	h := rabin.NewHash(p)
-//	actual := h.Value()
-//
-//	// Assert
-//	expected := 5378
-//	assert.EqualValues(t, expected, actual)
-//}
-//
-//func TestNextRollingHash(t *testing.T) {
-//	// Set up
-//	rh := rabin.NewHash("abcd")
-//
-//	// Action
-//	actual := rh.Next('e')
-//
-//	// Assert
-//	expected := 15
-//	assert.EqualValues(t, expected, actual)
-//}

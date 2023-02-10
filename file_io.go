@@ -77,7 +77,7 @@ func (fs FileIO) Sign(file, signatureFile string) error {
 	}
 	defer f.Close()
 	for ch := range fs.chunks {
-		if _, err = f.Write([]byte(ch.String())); err != nil {
+		if _, err = f.Write([]byte(ch.String() + "\n")); err != nil {
 			fmt.Println("err:", err)
 		}
 	}
