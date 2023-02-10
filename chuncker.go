@@ -3,7 +3,7 @@ package fdiff
 import (
 	"crypto/sha1"
 	"fmt"
-	
+
 	"github.com/EmilGeorgiev/fdiff/rollinghash"
 )
 
@@ -19,8 +19,8 @@ type Chunker struct {
 	offset                uint64
 }
 
-func NewChunker(new func([]byte) rollinghash.Hash, ws, minSch, maxSch, breckpoint uint64, b chan byte, ch chan Chunk) Chunker {
-	return Chunker{
+func NewChunker(new func([]byte) rollinghash.Hash, ws, minSch, maxSch, breckpoint uint64, b chan byte, ch chan Chunk) *Chunker {
+	return &Chunker{
 		newRollingHash:        new,
 		windowSize:            ws,
 		minSizeChunk:          minSch,
@@ -31,7 +31,7 @@ func NewChunker(new func([]byte) rollinghash.Hash, ws, minSch, maxSch, breckpoin
 	}
 }
 
-func (ch Chunker) SplitDataToChunks() {
+func (ch *Chunker) Start() {
 	go func() {
 		var h rollinghash.Hash
 		for b := range ch.bytes {
@@ -43,26 +43,28 @@ func (ch Chunker) SplitDataToChunks() {
 					continue
 				}
 				h = ch.newRollingHash(ch.bytesOfTheChunk)
-				ch.tryToCreateChunks(h, ch.bytesOfTheChunk)
+				ch.tryToCreateChunks(h)
 				continue
 			}
 			h.Next(b)
-			ch.tryToCreateChunks(h, ch.bytesOfTheChunk)
+			ch.tryToCreateChunks(h)
 		}
 		close(ch.chunks)
 	}()
 }
 
-func (ch Chunker) tryToCreateChunks(h rollinghash.Hash, bytesOfTheChunk []byte) {
+func (ch *Chunker) tryToCreateChunks(h rollinghash.Hash) {
 	if h.Value() == ch.fingerprintBreakPoint {
-		sum := fmt.Sprintf("%s", sha1.Sum(bytesOfTheChunk))
-		sign := fmt.Sprintf("%x\n", sum)
+		sum := fmt.Sprintf("%s", sha1.Sum(ch.bytesOfTheChunk))
+		sign := fmt.Sprintf("%x", sum)
 		c := Chunk{
 			Offset:    ch.offset,
-			Data:      bytesOfTheChunk,
+			Length:    uint64(len(ch.bytesOfTheChunk)),
+			Data:      ch.bytesOfTheChunk,
 			Signature: sign,
 		}
 		ch.chunks <- c
+		ch.offset += uint64(len(ch.bytesOfTheChunk))
 		ch.bytesOfTheChunk = []byte{} // reset bytes of the chunk because next byte will be part of the next chunk
 	}
 }

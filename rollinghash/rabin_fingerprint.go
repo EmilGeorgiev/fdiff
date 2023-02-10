@@ -1,7 +1,5 @@
 package rollinghash
 
-import "fmt"
-
 const (
 	// 2^13 irreducible polynomial
 	defaultModulus      = 8191
@@ -47,11 +45,6 @@ func (rfh *rabinFingerprintHash) Value() uint64 {
 // Next calculate the hash of the next rolling window. The window is shifted with one byte.
 func (rfh *rabinFingerprintHash) Next(b byte) uint64 {
 	var polynomialOverGF2 uint64
-	if rfh.value == 5643 {
-		for i, ff := range rfh.polynomialsOverGF2Values {
-			fmt.Printf("Index: %d value: %d\n", i, ff)
-		}
-	}
 	for j := 7; j >= 0; j-- {
 		mask := int32(1 << uint(j))
 		term := pow(multiplier, j)

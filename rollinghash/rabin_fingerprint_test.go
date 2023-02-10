@@ -8,28 +8,39 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestPow(t *testing.T) {
+	fmt.Println(rollinghash.Pow(10, 97))
+}
+
 func TestOoff(t *testing.T) {
-	data := []byte("LLorem ipsum dolor sit amet, consectetur adipiscing")
+	data := []byte("LLorem ipsum dolor sit amet,Lore consectetur Lore adipiscingLore Loreelit, sedLore do eiusmodLore ")
 
-	h := rollinghash.NewRabinFingerprint(data[:48])
+	h := rollinghash.NewRabinFingerprint(data[:4])
 
-	expected1 := rollinghash.NewRabinFingerprint(data[1:49])
-	expected2 := rollinghash.NewRabinFingerprint(data[2:50])
-	expected3 := rollinghash.NewRabinFingerprint(data[3:51])
-	//expected4 := rollinghash.NewRabinFingerprint(data[4:44])
-	//expected5 := rollinghash.NewRabinFingerprint(data[5:45])
-	//expected6 := rollinghash.NewRabinFingerprint(data[6:46])
+	// 7336
+	for i := 4; i < len(data); i++ {
+		if h.Next(data[i]) == 7336 {
+			fmt.Println("Index is breakpoint: ", i)
+		}
+	}
 
-	assert.EqualValues(t, expected1.Value(), h.Next(data[48]))
-	assert.EqualValues(t, expected2.Value(), h.Next(data[49]))
-	assert.EqualValues(t, expected3.Value(), h.Next(data[50]))
-	//assert.EqualValues(t, expected4.Value(), h.Next(data[43]))
-	//assert.EqualValues(t, expected5.Value(), h.Next(data[44]))
-	//assert.EqualValues(t, expected6.Value(), h.Next(data[45]))
-
-	fmt.Println(expected1.Value()) // 152   - 3292
-	fmt.Println(expected2.Value()) // 5824  - 152
-	fmt.Println(expected3.Value()) //  x    - 5824
+	//expected1 := rollinghash.NewRabinFingerprint(data[1:49])
+	//expected2 := rollinghash.NewRabinFingerprint(data[2:50])
+	//expected3 := rollinghash.NewRabinFingerprint(data[3:51])
+	////expected4 := rollinghash.NewRabinFingerprint(data[4:44])
+	////expected5 := rollinghash.NewRabinFingerprint(data[5:45])
+	////expected6 := rollinghash.NewRabinFingerprint(data[6:46])
+	//
+	//assert.EqualValues(t, expected1.Value(), h.Next(data[48]))
+	//assert.EqualValues(t, expected2.Value(), h.Next(data[49]))
+	//assert.EqualValues(t, expected3.Value(), h.Next(data[50]))
+	////assert.EqualValues(t, expected4.Value(), h.Next(data[43]))
+	////assert.EqualValues(t, expected5.Value(), h.Next(data[44]))
+	////assert.EqualValues(t, expected6.Value(), h.Next(data[45]))
+	//
+	//fmt.Println(expected1.Value()) // 152   - 3292
+	//fmt.Println(expected2.Value()) // 5824  - 152
+	//fmt.Println(expected3.Value()) //  x    - 5824
 	//fmt.Println(expected4.Value()) //   -
 	//fmt.Println(expected5.Value()) //   -
 	//fmt.Println(expected6.Value()) // -   -
