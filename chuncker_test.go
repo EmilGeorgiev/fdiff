@@ -1,121 +1,31 @@
 package fdiff_test
 
 import (
+	"crypto/sha1"
 	"fmt"
+	"testing"
+
 	"github.com/EmilGeorgiev/fdiff"
 	"github.com/EmilGeorgiev/fdiff/rollinghash"
-	"testing"
+	"github.com/stretchr/testify/assert"
 )
 
-// II
-//Index: 0 value: 12852182667500409280
-//Index: 1 value: 1209759587358197056
-//Index: 2 value: 822400886780886208
-//Index: 3 value: 3208146766902901632
-//Index: 4 value: 15244482387627832448
-//Index: 5 value: 18084331046494845760
-//Index: 6 value: 3600053029932944384
-//Index: 7 value: 5795262727932163200
-//Index: 8 value: 15865245689827782400
-//Index: 9 value: 13836295259772980480
-//Index: 10 value: 10941740188054335168
-//Index: 11 value: 8298714047641836096
-//Index: 12 value: 8158871723265319808
-//Index: 13 value: 14372858913305961536
-//Index: 14 value: 16506942110284985664
-//Index: 15 value: 9425076497354134592
-//Index: 16 value: 2223766670956640320
-//Index: 17 value: 14907015033775731584
-//Index: 18 value: 18252730343828783552
-//Index: 19 value: 13416367031132896448
-//Index: 20 value: 8156597942038953856
-//Index: 21 value: 3715217184620545792
-//Index: 22 value: 2559896506440290624
-//Index: 23 value: 12008581158788579648
-//Index: 24 value: 8638187679046612800
-//Index: 25 value: 17266076466656156288
-//Index: 26 value: 8748135512097257024
-//Index: 27 value: 16142389053680758912
-//Index: 28 value: 18170938228225025664
-//Index: 29 value: 7117377681404215488
-//Index: 30 value: 5067494133092160256
-//Index: 31 value: 9760938829164094784
-//Index: 32 value: 13726213674885491200
-//Index: 33 value: 10632294799812275584
-//Index: 34 value: 3882145211749187968
-//Index: 35 value: 7006627337332500928
-//Index: 36 value: 12377681777845538304
-//Index: 37 value: 14484144264725056320
-//Index: 38 value: 8746664241891961408
-//Index: 39 value: 9172878806863763072
-//Index: 40 value: 15973856004509976064
-//Index: 41 value: 1098607987775947328
-//Index: 42 value: 4601817005952290048
-//Index: 43 value: 3251430965192016
-//Index: 44 value: 6875203631056
-//Index: 45 value: 9409697932
-//Index: 46 value: 5006346
-//Index: 47 value: 12290
-
-// I
-//Index: 0 value: 6123416955845913472
-//Index: 1 value: 374068105479610368
-//Index: 2 value: 8888014047906158848
-//Index: 3 value: 7804288091275777248
-//Index: 4 value: 10824595802316225024
-//Index: 5 value: 4345132251280734496
-//Index: 6 value: 3711456984055509120
-//Index: 7 value: 6361593132381759136
-//Index: 8 value: 13240452316872041984
-//Index: 9 value: 2170861388180499232
-//Index: 10 value: 5735710950687358976
-//Index: 11 value: 11424663388189766656
-//Index: 12 value: 3376841374075701408
-//Index: 13 value: 17378093665894555104
-//Index: 14 value: 780769756619551328
-//Index: 15 value: 9177332348238044992
-//Index: 16 value: 8915289847264047104
-//Index: 17 value: 3021768914577477504
-//Index: 18 value: 6689389792522094784
-//Index: 19 value: 9671219143754093056
-//Index: 20 value: 7150643042377812256
-//Index: 21 value: 6800928329182030688
-//Index: 22 value: 2510347676617072704
-//Index: 23 value: 9269388171070917856
-//Index: 24 value: 8622562072012424928
-//Index: 25 value: 3595047768938807456
-//Index: 26 value: 4176606776676639200
-//Index: 27 value: 2341335134167300832
-//Index: 28 value: 13138168069279961024
-//Index: 29 value: 11905399351872547168
-//Index: 30 value: 7732202050115644000
-//Index: 31 value: 11899554537724428256
-//Index: 32 value: 9185612501614546784
-//Index: 33 value: 6494075586405787808
-//Index: 34 value: 1495785354072764896
-//Index: 35 value: 7826693212176899744
-//Index: 36 value: 12129937628729448704
-//Index: 37 value: 11181616533197155232
-//Index: 38 value: 516778984262847136
-//Index: 39 value: 11918063115860138144
-//Index: 40 value: 10545018858897870400
-//Index: 41 value: 4001749420078748416
-//Index: 42 value: 4601817005952290048
-//Index: 43 value: 3251430965192016
-//Index: 44 value: 6875203631056
-//Index: 45 value: 9409697932
-//Index: 46 value: 5006346
-//Index: 47 value: 12290
-
 func TestNewChunker(t *testing.T) {
-	data := []byte("If you want to draw readers to a story, you need to make them want to choose it")
-	// byte 97 when we have II
-	b := make(chan byte, 1000)
-	ch := make(chan fdiff.Chunk)
+	// SetUp
+	data := []byte("If you abcd want to draw abcd readers to a story, you need abcd" +
+		" to make them want to choose abc ABCD it. Hello World!!! abc d")
+	b := make(chan byte)
+	ch := make(chan fdiff.Chunk, 1)
+	cfg := fdiff.ChunkConfig{
+		WindowSize:            4,
+		MinSizeChunk:          20,
+		MaxSizeChunk:          50,
+		FingerprintBreakPoint: 3194, // this is the hash fingerprint of "abcd"
+	}
+	c := fdiff.NewChunker(rollinghash.NewRabinFingerprint, cfg, b, ch)
 
-	c := fdiff.NewChunker(rollinghash.NewRabinFingerprint, 48, 0, 0, 0, b, ch)
+	// Action
 	c.Start()
-
 	go func() {
 		for _, d := range data {
 			b <- d
@@ -123,17 +33,76 @@ func TestNewChunker(t *testing.T) {
 		close(b)
 	}()
 
+	// Assert
+	var actual []fdiff.Chunk
 	for chunk := range ch {
-		fmt.Printf("Offset: %d-%s\n", chunk.Offset, chunk.Signature)
+		actual = append(actual, chunk)
+	}
+	expected := []fdiff.Chunk{
+		{
+			Offset:    0,
+			Data:      []byte("If you abcd want to draw abcd"),
+			Length:    29,
+			Signature: fmt.Sprintf("%x", sha1.Sum([]byte("If you abcd want to draw abcd"))),
+		},
+		{
+			Offset:    29,
+			Data:      []byte(" readers to a story, you need abcd"),
+			Length:    34,
+			Signature: fmt.Sprintf("%x", sha1.Sum([]byte(" readers to a story, you need abcd"))),
+		},
+		{
+			Offset:    63,
+			Data:      []byte(" to make them want to choose abc ABCD it. Hello Wo"),
+			Length:    50,
+			Signature: fmt.Sprintf("%x", sha1.Sum([]byte(" to make them want to choose abc ABCD it. Hello Wo"))),
+		},
+		{
+			Offset:    113,
+			Data:      []byte("rld!!! abc d"),
+			Length:    12,
+			Signature: fmt.Sprintf("%x", sha1.Sum([]byte("rld!!! abc d"))),
+		},
 	}
 
-	//Offset: 0-cb4d8273210dc8b9eb62fbe1702620fb3f702f86
-	//Offset: 4591-5f813951c2609987dd0e06c7d197c53151da1122
-	//Offset: 30780-528c8bdaff0dd67616ed635303c7b9b2d2a69303
+	assert.Equal(t, expected, actual)
+}
 
-	//Offset: 0-0894a94c186e98b9b8685af6cfce58c726e0c914
-	//Offset: 4015-f52591b4fd6510b2cdf4a10a944c860130b59e49
-	//Offset: 8306-55a86ed9e0a6cffa693532fc663b948c8efbefbc
-	//Offset: 22889-de09a54015655520d8b5435f2d0af9a033fb08d3
+func TestNewChunker_WhenTheFirstWindowIsTheFirstChunk(t *testing.T) {
+	// SetUp
+	data := []byte("If you want to draw ")
+	b := make(chan byte)
+	ch := make(chan fdiff.Chunk, 1)
+	cfg := fdiff.ChunkConfig{
+		WindowSize:            20,
+		MinSizeChunk:          20,
+		MaxSizeChunk:          50,
+		FingerprintBreakPoint: 2245, // this is the hash fingerprint of "If you want to draw "
+	}
+	c := fdiff.NewChunker(rollinghash.NewRabinFingerprint, cfg, b, ch)
 
+	// Action
+	c.Start()
+	go func() {
+		for _, d := range data {
+			b <- d
+		}
+		close(b)
+	}()
+
+	// Assert
+	var actual []fdiff.Chunk
+	for chunk := range ch {
+		actual = append(actual, chunk)
+	}
+	expected := []fdiff.Chunk{
+		{
+			Offset:    0,
+			Data:      []byte("If you want to draw "),
+			Length:    20,
+			Signature: fmt.Sprintf("%x", sha1.Sum([]byte("If you want to draw "))),
+		},
+	}
+
+	assert.Equal(t, expected, actual)
 }

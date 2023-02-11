@@ -32,23 +32,6 @@ var (
 
 func TestNewRabinFingerprint(t *testing.T) {
 	// SetUp
-
-	// a = 97 = 01100001 = (127^6 + 127^5 +127^0) % 8191 = 3002
-	polyOfA := pow(127, 6) + pow(127, 5) + 1
-	fingerprintOfA := polyOfA % 8191
-
-	// b = 98 =  01100010 = (127^6 + 127^5 +127^1) % 8191 = 3128
-	polyOfB := pow(127, 6) + pow(127, 5) + 127
-	fingerprintOfB := polyOfB % 8191
-
-	// c = 99 =  01100011 = (127^6 + 127^5 +127^1 + 127^0) % 8191 = 3129
-	polyOfC := pow(127, 6) + pow(127, 5) + 127 + 1
-	fingerprintOfC := polyOfC % 8191
-
-	// d = 100 = 01100100 = (127^6 + 127^5 +127^2) % 8191 = 2748
-	polyOfD := pow(127, 6) + pow(127, 5) + ((127 * 127) % 8191)
-	fingerprintOfD := polyOfD % 8191
-
 	cases := []struct {
 		name                string
 		text                string
