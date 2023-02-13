@@ -1,2 +1,4 @@
 .idea/
 *.out
+./test/expected_sign_test_data
+./test/sign_test_data
