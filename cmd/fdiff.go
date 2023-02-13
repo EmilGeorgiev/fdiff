@@ -10,14 +10,21 @@ import (
 )
 
 // signature indicate that the program will
-var signature = flag.Bool("signature", false, "create a file with signatures")
-var delta = flag.Bool("delta", false, "create a file with signatures")
-var oldFile = flag.String("old-file", "", "")
-var signatureFile = flag.String("signature-file", "", "")
-var newFile = flag.String("new-file", "", "")
+var signature = flag.Bool("signature", false, "create a signature file of a file.")
+var delta = flag.Bool("delta", false, "find the difference between two files or two versions of the file.")
+var oldFile = flag.String("old-file", "", "show for which file the signature will be created.")
+var signatureFile = flag.String("signature-file", "", "show what will be the name of the signature file.")
+var newFile = flag.String("new-file", "", "show the version of the file or the new file for which the command will find the delta.")
+var showDelta = flag.Bool("show-data", false, "print the data in the new chunks")
+var help = flag.String("help", "", "describe how to use the tool")
 
 func main() {
 	flag.Parse()
+
+	if help != nil {
+		printHelp()
+		return
+	}
 
 	b := make(chan byte, 1000)
 	ch := make(chan fdiff.Chunk, 1000)
@@ -33,18 +40,15 @@ func main() {
 	chuncker := fdiff.NewChunker(newHash, cfg, b, ch)
 	chuncker.Start()
 
-	fmt.Println("Signature: ", *signature)
-	fmt.Println("OldFile: ", *oldFile)
-	fmt.Println("SignatureFile: ", *signatureFile)
 	fs := fdiff.NewFileSignerDelta(b, ch)
 	if *signature {
+		fmt.Println("Creating a signature of the file: ", *signatureFile)
 		if err := fs.Sign(*oldFile, *signatureFile); err != nil {
 			log.Fatal(err)
 		}
 		fmt.Println("Signature file is created")
 		return
 	} else if *delta {
-
 		d, err := fs.FindDelta(*signatureFile, *newFile)
 		if err != nil {
 			log.Fatal(err)
@@ -57,7 +61,24 @@ func main() {
 		fmt.Println("New chunks that replace the old ones:")
 		for _, c := range d.NewChunks {
 			fmt.Printf("	- offset: %d, length: %d, hash: %s\n", c.Offset, c.Length, c.Signature)
-			fmt.Printf("	- %s\n", c.Data)
+			if *showDelta {
+				fmt.Printf("	- %s\n", c.Data)
+			}
 		}
 	}
+}
+
+func printHelp() {
+	fmt.Println("Usage:")
+	fmt.Println("	fdiff -signature=true -old-file <name-of-file> -signature-file <name-of-sign-file>")
+	fmt.Println("	fdiff -delta=true -signature-file <name-of-sign-file> -new-file <name-of_new-file>")
+
+	fmt.Println("Flags:")
+	fmt.Println("	- signature - create a signature file of a file.")
+	fmt.Println("	- delta - find the difference between two files or two versions of the file.")
+	fmt.Println("	- old-file - show for which file the signature will be created.")
+	fmt.Println("	- signature-file - show what will be the name of the signature file.")
+	fmt.Println("	- new-file - show the version of the file or the new file for which the command will find the delta.")
+	fmt.Println("	- show-data - print the data in the new chunks.")
+	fmt.Println("	- help - describe how to use the tool.")
 }
