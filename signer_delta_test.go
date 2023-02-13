@@ -4,6 +4,7 @@ import (
 	"crypto/sha1"
 	"fmt"
 	"io/fs"
+	"log"
 	"os"
 	"testing"
 
@@ -103,15 +104,16 @@ func signFile(file, filesSign string, windowsSize int) {
 	defer os.Remove("./test/expected_sign_test_data")
 	fch := fakeChunker{data: d, chunks: ch, windowsSize: windowsSize}
 	fch.Start("./test/expected_sign_test_data")
-	fs.Sign(file, filesSign)
+	_ = fs.Sign(file, filesSign)
 }
 
 func writeDataToFile(file string, data []byte) {
 	f, err := os.Open(file)
 	if err != nil {
-		if _, ok := err.(*fs.PathError); ok {
-			f, _ = os.Create(file)
+		if _, ok := err.(*fs.PathError); !ok {
+			log.Fatal(err)
 		}
+		f, _ = os.Create(file)
 	}
 	n, _ := f.Write(data)
 	fmt.Println("Number of bytes: ", n)

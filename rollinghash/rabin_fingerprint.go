@@ -104,7 +104,7 @@ func NewRabinFingerprint(bytes []byte) Hash {
 		for j := 7; j >= 0; j-- {
 			// polynomials over GF(2)
 			mask := int32(1 << uint(j))
-			degreeOfPolynomial -= 1
+			degreeOfPolynomial--
 			term := pow(multiplier, degreeOfPolynomial)
 			bit := int32(b) & mask
 			if bit == 0 {

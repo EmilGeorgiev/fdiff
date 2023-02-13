@@ -57,14 +57,8 @@ func createChunkFromString(str string) Chunk {
 		return Chunk{}
 	}
 
-	offset, err := strconv.ParseUint(p[0], 10, 64)
-	if err != nil {
-
-	}
-	length, err := strconv.ParseUint(p[1], 10, 64)
-	if err != nil {
-
-	}
+	offset, _ := strconv.ParseUint(p[0], 10, 64)
+	length, _ := strconv.ParseUint(p[1], 10, 64)
 
 	return Chunk{
 		Offset:    offset,
@@ -89,18 +83,18 @@ func NewFileSignerDelta(d chan<- byte, ch <-chan Chunk) SignerDelta {
 // Sign create a new file that contains chunk's signatures of a file. The method
 // read all data from a file and send bytes to the chunker worker. Then ged created
 // chunks and store them to signatureFile.
-func (fs fileSignerDelta) Sign(file, signatureFile string) error {
+func (fsd fileSignerDelta) Sign(file, signatureFile string) error {
 	f, err := os.Create(signatureFile)
 	if err != nil {
 		return err
 	}
 
-	if err = fs.sendFileDataToChunkerWorker(file); err != nil {
+	if err = fsd.sendFileDataToChunkerWorker(file); err != nil {
 		return err
 	}
 
 	defer f.Close()
-	for ch := range fs.chunks {
+	for ch := range fsd.chunks {
 		_, _ = f.Write([]byte(ch.String() + "\n"))
 	}
 	return err
@@ -109,14 +103,14 @@ func (fs fileSignerDelta) Sign(file, signatureFile string) error {
 // FindDelta find the difference between old and new version of a file. The method accept two parameters,
 // the first one, fileSignature, is the file that contains all chunks' signatures that are used to find
 // difference in the new version of the file 'newFile'.
-func (fio fileSignerDelta) FindDelta(fileSignature, newFile string) (Delta, error) {
+func (fsd fileSignerDelta) FindDelta(fileSignature, newFile string) (Delta, error) {
 	chunks := decodeChunksOfSignatureFile(fileSignature)
-	if err := fio.sendFileDataToChunkerWorker(newFile); err != nil {
+	if err := fsd.sendFileDataToChunkerWorker(newFile); err != nil {
 		return Delta{}, err
 	}
 
 	var newChunks []Chunk
-	for ch := range fio.chunks {
+	for ch := range fsd.chunks {
 		if _, ok := chunks[ch.Signature]; ok {
 			delete(chunks, ch.Signature)
 			continue
@@ -139,7 +133,7 @@ func (fio fileSignerDelta) FindDelta(fileSignature, newFile string) (Delta, erro
 // through a channel to worker that will split data to chunks.
 //
 // The parameter 'file' is the file of which should be split to chunks.
-func (fs fileSignerDelta) sendFileDataToChunkerWorker(file string) error {
+func (fsd fileSignerDelta) sendFileDataToChunkerWorker(file string) error {
 	f, err := os.Open(file)
 	if err != nil {
 		return err
@@ -150,14 +144,14 @@ func (fs fileSignerDelta) sendFileDataToChunkerWorker(file string) error {
 			data := make([]byte, 48)
 			n, errr := f.Read(data)
 			if errr != nil {
-				close(fs.data)
+				close(fsd.data)
 				if err != io.EOF {
 					return
 				}
 				return
 			}
 			for _, b := range data[:n] {
-				fs.data <- b
+				fsd.data <- b
 			}
 		}
 	}()
