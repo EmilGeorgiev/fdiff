@@ -11,6 +11,21 @@ boarders to bytes shifting. For example if a new byte is added in the beginning 
 chunks will be shifted with one byte too and most of the chunks (except the first one) will contain the same bytes 
 as before. The implementation of the Rabin fingerprint rolling hash can be found in the file [rabin_fingerprint.go](https://github.com/EmilGeorgiev/fdiff/blob/master/rollinghash/rabin_fingerprint.go)
 
+The project contains 3 parts the first part is responsible for IO operations [signer_delta](https://github.com/EmilGeorgiev/fdiff/blob/master/signer_delta.go) 
+of the files, the second one split files on chunks [chuncker](https://github.com/EmilGeorgiev/fdiff/blob/master/chuncker.go), 
+and the last one contains the implementation of the rolling hash [Rabin fingerprint](https://github.com/EmilGeorgiev/fdiff/blob/master/rollinghash/rabin_fingerprint.go). 
+
+
+```
+    |------------------|    bytes     |------------------|             |-------------------|
+    |                  | -----------> |                  |             |                   |
+    | sign_delta (I/O) |   chunks     |     CHUNCKER     | ----------->| ROLLING HASH Impl.|
+    |                  | <----------- |                  |             |                   |
+    |------------------|              |------------------|             |-------------------|                  
+```
+
+The implementation of each part can be changes without breaking the logic in other parts (if the contract interfaces are unchanged)
+
 ## Installation
 
 Clone the repository:
@@ -25,6 +40,17 @@ go install cmd/fdiff.go
 
 Now you should have **fdiff** command.
 
+## Configuration
+
+The file **config.yaml** contains configuration information:
+- **window_size** - is the number of bytes that are included in the window that going 
+to be rolling/shifted through the data.
+- **min_size_chunk** - point how much must be the minimum size of a Chunk.
+- **max_size_chunk** - point how much must be the maximum size of a Chunk.
+- **fingerprint_break_point** - point when boundary of the chunks. 
+When the hash value of the bytes in window are equal to fingerprint_break_point 
+this means that the Chuncker should create a new chunk
+
 ## Example
 Let's see how the tool works. First prepare a big file that you will use. For example, you can download a sample
 file ("2mb text file") from here: https://www.learningcontainer.com/sample-text-file/
@@ -37,9 +63,9 @@ fdiff -signature=true -old-file sample-2mb-text-file.txt -signature-file signatu
 
 The command will split and sign the file **sample-2mb-text-file.txt** on chunks and a new signature file will be created. 
 The command has several flags: 
-    - **-signature=true** - instruct the tool to create a signature file. 
-    - **-old-file sample-2mb-text-file.txt** - show which filed will be signed.  
-    - **-signature-file signature** - show in which file the signatures should be stored.
+- **-signature=true** - instruct the tool to create a signature file. 
+- **-old-file sample-2mb-text-file.txt** - show which filed will be signed.  
+- **-signature-file signature** - show in which file the signatures should be stored.
 
 The result of the command is:
 ```
