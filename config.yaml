@@ -1,0 +1,14 @@
+# WindowSize is the number of bytes that are included in
+# the window that going to be rolling/shifted through the data.
+window_size: 48
+
+# MinSizeChunk point how much must be the minimum size of a Chunk.
+min_size_chunk: 2048
+
+# MaxSizeChunk point how much must be the maximum size of a Chunk.
+max_size_chunk: 65536
+
+# FingerprintBreakPoint point when boundary of the chunks. When the
+# hash value of the bytes in window are equal to FingerprintBreakPoint
+# this means that the Chuncker should create a new chunk
+fingerprint_break_point: 0

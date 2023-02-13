@@ -4,9 +4,11 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/EmilGeorgiev/fdiff"
 	"github.com/EmilGeorgiev/fdiff/rollinghash"
+	"gopkg.in/yaml.v3"
 )
 
 // signature indicate that the program will
@@ -16,12 +18,12 @@ var oldFile = flag.String("old-file", "", "show for which file the signature wil
 var signatureFile = flag.String("signature-file", "", "show what will be the name of the signature file.")
 var newFile = flag.String("new-file", "", "show the version of the file or the new file for which the command will find the delta.")
 var showDelta = flag.Bool("show-data", false, "print the data in the new chunks")
-var help = flag.String("help", "", "describe how to use the tool")
+var help = flag.Bool("help", false, "describe how to use the tool")
 
 func main() {
 	flag.Parse()
 
-	if help != nil {
+	if *help {
 		printHelp()
 		return
 	}
@@ -29,13 +31,8 @@ func main() {
 	b := make(chan byte, 1000)
 	ch := make(chan fdiff.Chunk, 1000)
 
+	cfg := getConfig()
 	newHash := rollinghash.NewRabinFingerprint
-	cfg := fdiff.ChunkConfig{
-		WindowSize:            48,
-		MinSizeChunk:          2048,
-		MaxSizeChunk:          65536,
-		FingerprintBreakPoint: 0,
-	}
 
 	chuncker := fdiff.NewChunker(newHash, cfg, b, ch)
 	chuncker.Start()
@@ -66,6 +63,21 @@ func main() {
 			}
 		}
 	}
+}
+
+func getConfig() fdiff.ChunkConfig {
+	data, err := os.ReadFile("config.yaml")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var config fdiff.ChunkConfig
+	err = yaml.Unmarshal(data, &config)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return config
 }
 
 func printHelp() {

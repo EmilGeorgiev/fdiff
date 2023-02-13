@@ -11,18 +11,18 @@ import (
 type ChunkConfig struct {
 	// WindowSize is the number of bytes that are included in
 	// the window that going to be rolling/shifted through the data.
-	WindowSize uint64
+	WindowSize uint64 `yaml:"window_size"`
 
 	// MinSizeChunk point how much must be the minimum size of a Chunk.
-	MinSizeChunk int
+	MinSizeChunk int `yaml:"min_size_chunk"`
 
 	// MaxSizeChunk point how much must be the maximum size of a Chunk.
-	MaxSizeChunk int
+	MaxSizeChunk int `yaml:"max_size_chunk"`
 
 	// FingerprintBreakPoint point when boundary of the chunks. When the
 	// hash value of the bytes in window are equal to FingerprintBreakPoint
 	// this means that the Chuncker should create a new chunk
-	FingerprintBreakPoint uint64
+	FingerprintBreakPoint uint64 `yaml:"fingerprint_break_point"`
 }
 
 // Chunker split data to chunks. It read data from a channel and
